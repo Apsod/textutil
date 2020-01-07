@@ -7,7 +7,7 @@ from textutil.util import WindowData, PseudoShuffle
 
 
 def counter(sp):
-    parser = sp.add_parser('vocab')
+    parser = sp.add_parser('vocab', help='Create vocabulary file.')
     parser.add_argument('files', type=str, nargs='+')
     parser.add_argument('--output', type=str, default='counter.txt')
 
@@ -17,7 +17,7 @@ def counter(sp):
     parser.set_defaults(go=go)
 
 def ixify(sp):
-    parser = sp.add_parser('ixify')
+    parser = sp.add_parser('ixify', help='Flatten and ixify files.')
     parser.add_argument('files', type=str, nargs='+')
     parser.add_argument('--vocab', type=str)
     parser.add_argument('--num_words', type=int, default=None)
@@ -33,7 +33,7 @@ def ixify(sp):
     parser.set_defaults(go=go)
 
 def sample(sp):
-    parser = sp.add_parser('sample')
+    parser = sp.add_parser('sample', help='Sample context windows.')
     parser.add_argument('--prefix', type=str)
     parser.add_argument('--radius', type=int, default=3)
     parser.add_argument('--samples', type=int, default=10)
