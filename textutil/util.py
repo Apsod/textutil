@@ -27,25 +27,28 @@ def pseudopermutation(N):
             x = (a * x + c) % m
 
 class WindowData(torch.utils.data.Dataset):
-    def __init__(self, file, vocab, radius):
+    def __init__(self, file, vocab, radius, memmap=True):
         self.pad_ix = vocab.pad_ix
         self.sos_ix = vocab.sos_ix
         self.eos_ix = vocab.eos_ix
         self.radius = radius
-
-        self.ixmm = numpy.memmap(file, numpy.uint32, 'r')
+        self.memmap = memmap
+        if self.memmap:
+            self.ixmm = numpy.memmap(file, numpy.uint32, 'r')
+        else:
+            self.ixmm = numpy.fromfile(file, numpy.uint32)
 
         self.size = self.radius * 2 + 1
         self.len = len(self.ixmm)
-        self.vals = numpy.empty(
-            self.size,
-            dtype=numpy.uint32,
-        )
 
     def __len__(self):
         return len(self.ixmm)
 
     def __getitem__(self, ix):
+        vals = numpy.empty(
+            self.size,
+            dtype=numpy.uint32,
+        )
         tmp = ix - self.radius
         lb = max(tmp, 0)
         lp = lb - tmp
@@ -55,38 +58,34 @@ class WindowData(torch.utils.data.Dataset):
         up = tmp - ub
 
         sup = self.size - up
-        self.vals[lp:sup] = self.ixmm[lb:ub]
+        vals[lp:sup] = self.ixmm[lb:ub]
 
-        flags = self.vals & B
+        flags = vals & B
         flags ^= flags[self.radius]
 
-        self.vals &= ~B
+        vals &= ~B
 
         i = self.radius - 1
         while i >= lp and not flags[i]:
             i -= 1
+
         if i >= 0:
-            self.vals[i] = self.sos_ix
-            i -= 1
-            while i >= 0:
-                self.vals[i] = self.pad_ix
-                i -= 1
+            vals[i] = self.sos_ix
+            vals[:i] = self.pad_ix
 
         i = self.radius + 1
         while i < sup and not flags[i]:
             i += 1
 
         if i < self.size:
-            self.vals[i] = self.eos_ix
-            i += 1
-            while i < self.size:
-                self.vals[i] = self.pad_ix
-                i += 1
+            vals[i] = self.eos_ix
+            vals[i+1:] = self.pad_ix
 
-        return self.vals.copy()
+        return vals.astype(numpy.int64)
 
     def close(self):
-        del self.ixmm
+        if self.memmap:
+            del self.ixmm
 
 
 class PseudoShuffle(torch.utils.data.Sampler):

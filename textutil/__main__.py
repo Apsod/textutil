@@ -37,10 +37,11 @@ def sample(sp):
     parser.add_argument('--prefix', type=str)
     parser.add_argument('--radius', type=int, default=3)
     parser.add_argument('--samples', type=int, default=10)
+    parser.add_argument('--memmap', action='store_true')
 
     def go(args):
         vocab = Vocabulary.from_file('{}.vocabulary'.format(args.prefix))
-        ds = WindowData('{}.bin'.format(args.prefix), vocab, args.radius)
+        ds = WindowData('{}.bin'.format(args.prefix), vocab, args.radius, args.memmap)
         ps = PseudoShuffle(ds)
         for ix in itertools.islice(ps, args.samples):
             print(' '.join([vocab.i2w[i][1] for i in ds[ix]]))

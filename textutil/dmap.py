@@ -4,6 +4,7 @@ from functools import partial
 from textutil.text import read_file
 from textutil.util import B
 import mmap
+import tqdm
 
 
 
@@ -54,9 +55,10 @@ def ixifyfile(file, vocab=None):
 def ixifyfiles(ixfile, files, vocab):
     ixf = partial(ixifyfile, vocab=vocab)
     even = True
+    files = list(files)
     with open(ixfile, 'wb') as ixhandle:
         with multiprocessing.Pool(8) as pool:
-            for arr, i_even in pool.imap_unordered(ixf, files):
+            for arr, i_even in tqdm.tqdm(pool.imap_unordered(ixf, files), total=len(files)):
                 if even:
                     ixhandle.write(arr.tobytes())
                 else:

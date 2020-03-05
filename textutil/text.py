@@ -1,6 +1,7 @@
 import collections
 import itertools
 import multiprocessing
+import tqdm
 
 """
 File -> [[Word]]
@@ -32,8 +33,9 @@ Count words in all files
 def count_files(files):
     ctr = collections.Counter()
     sentences = 0
+    files = list(files)
     with multiprocessing.Pool(8) as pool:
-        for fc, fs in pool.imap_unordered(count_file, files):
+        for fc, fs in tqdm.tqdm(pool.imap_unordered(count_file, files), total=len(files)):
             ctr += fc
             sentences += fs
     return ctr, sentences
